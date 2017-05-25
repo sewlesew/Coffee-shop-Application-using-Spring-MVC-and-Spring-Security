@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+        start-state="customerDetails">
+        
+        
+	<on-start>
+		<evaluate expression="orderController.createOrder()"
+			result="conversationScope.order" />
+	</on-start>
+
+	<view-state id="customerDetails" model="order" >
+		<transition on="next" to="selectProduct">
+					
+			<evaluate expression="orderController.productListByName()"
+				result="flowScope.productNames" />
+		</transition>
+		<transition on="cancel" to="cancelOrder" />
+		
+	</view-state>
+
+	<view-state id="selectProduct" model="orderLine">
+		<on-render>
+			<evaluate expression="orderController.createOrderLine(order)"
+				result="conversationScope.orderLine" />
+		</on-render>
+		<transition on="previous" to="customerDetails" />
+		<transition on="next" to="reviewOrder" />
+		<transition on="add" to="selectProduct">
+		<evaluate
+				expression="orderController.addOrderLine(order,orderLine)" />		
+		</transition>
+		<transition on="clear" to="selectProduct">
+			<evaluate expression="orderController.clearOrdeLines(order)"/>
+		</transition>
+		<transition on="cancel" to="cancelOrder" />
+	</view-state>
+	
+
+	
+
+	<view-state id="reviewOrder" model="order">
+
+		<transition on="previous" to="selectProduct" />
+		<transition on="next" to="orderConfirmation">
+			<evaluate expression="orderController.submitOrder(order)" />
+		</transition>
+		<transition on="cancel" to="cancelOrder" />
+	</view-state>
+
+	<view-state id="orderConfirmation" view="orderConfirmation" >
+		<transition on="complete" to="goHome" />
+	</view-state>
+
+	<view-state id="cancelOrder" view="cancelOrder" >
+		<transition on="exit" to="goHome" />
+	</view-state>
+
+	<end-state id="goHome" view="externalRedirect:/home/" />
+</flow>
